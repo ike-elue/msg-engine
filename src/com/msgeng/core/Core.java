@@ -1,8 +1,41 @@
 package com.msgeng.core;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
-import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.glfw.GLFW.GLFW_FALSE;
+import static org.lwjgl.glfw.GLFW.GLFW_RESIZABLE;
+import static org.lwjgl.glfw.GLFW.GLFW_TRUE;
+import static org.lwjgl.glfw.GLFW.GLFW_VISIBLE;
+import static org.lwjgl.glfw.GLFW.glfwCreateWindow;
+import static org.lwjgl.glfw.GLFW.glfwDestroyWindow;
+import static org.lwjgl.glfw.GLFW.glfwGetPrimaryMonitor;
+import static org.lwjgl.glfw.GLFW.glfwGetVideoMode;
+import static org.lwjgl.glfw.GLFW.glfwGetWindowSize;
+import static org.lwjgl.glfw.GLFW.glfwInit;
+import static org.lwjgl.glfw.GLFW.glfwMakeContextCurrent;
+import static org.lwjgl.glfw.GLFW.glfwPollEvents;
+import static org.lwjgl.glfw.GLFW.glfwSetErrorCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetWindowPos;
+import static org.lwjgl.glfw.GLFW.glfwSetWindowShouldClose;
+import static org.lwjgl.glfw.GLFW.glfwShowWindow;
+import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
+import static org.lwjgl.glfw.GLFW.glfwSwapInterval;
+import static org.lwjgl.glfw.GLFW.glfwTerminate;
+import static org.lwjgl.glfw.GLFW.glfwWindowHint;
+import static org.lwjgl.glfw.GLFW.glfwWindowShouldClose;
+import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
+import static org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT;
+import static org.lwjgl.opengl.GL11.GL_DEPTH_TEST;
+import static org.lwjgl.opengl.GL11.GL_FLOAT;
+import static org.lwjgl.opengl.GL11.GL_MODELVIEW;
+import static org.lwjgl.opengl.GL11.GL_PROJECTION;
+import static org.lwjgl.opengl.GL11.GL_TRIANGLES;
+import static org.lwjgl.opengl.GL11.glClear;
+import static org.lwjgl.opengl.GL11.glClearColor;
+import static org.lwjgl.opengl.GL11.glDrawArrays;
+import static org.lwjgl.opengl.GL11.glEnable;
+import static org.lwjgl.opengl.GL11.glLoadIdentity;
+import static org.lwjgl.opengl.GL11.glMatrixMode;
+import static org.lwjgl.opengl.GL11.glOrtho;
 import static org.lwjgl.opengl.GL15.GL_ARRAY_BUFFER;
 import static org.lwjgl.opengl.GL15.GL_STATIC_DRAW;
 import static org.lwjgl.opengl.GL15.glBindBuffer;
@@ -28,6 +61,7 @@ import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
+import com.msgeng.TestMessage;
 import com.msgeng.render.ShaderProgram;
 import com.msgeng.utils.Utils;
 
@@ -39,7 +73,10 @@ public class Core implements Runnable {
 
 	public final double SECOND = 1000000000;
 
+	private MessageBus mb;
+	
 	// Thread Main
+	private ThreadPool threadPool;
 	private volatile Thread thread;
 	public volatile boolean running;
 	private final double frameRate;
@@ -79,6 +116,9 @@ public class Core implements Runnable {
 		this.height = height;
 		this.game = game;
 		this.isDebug = isDebug;
+		
+		mb = new MessageBus(threadCount);
+		threadPool = new ThreadPool(mb);
 	}
 
 	/**
@@ -180,6 +220,10 @@ public class Core implements Runnable {
 	                MemoryUtil.memFree(verticesBuffer);
 	            }
 	        }
+	        
+	        for(int i = 0; i < threadCount * 100; i++) {
+	        	mb.addMessage(new TestMessage(i));
+	        }
 	}
 
 	@Override
@@ -263,6 +307,7 @@ public class Core implements Runnable {
 	private void update(double delta) {
 		glfwPollEvents();
 		// update code (can be multithreaded)
+		threadPool.update(delta);
 	}
 
 	private void render() {
@@ -309,6 +354,8 @@ public class Core implements Runnable {
 	    // Delete the VAO
 	    glBindVertexArray(0);
 	    glDeleteVertexArrays(vaoId);
+	    
+	    threadPool.dispose();
 		
 		// Free the window callbacks and destroy the window
 		glfwFreeCallbacks(window);
