@@ -20,6 +20,8 @@ import static org.lwjgl.system.MemoryUtil.*;
  */
 public class Core implements Runnable {
 
+	public final double SECOND = 1000000000;
+	
     // Thread Main
     private volatile Thread thread;
     public volatile boolean running;
@@ -73,7 +75,7 @@ public class Core implements Runnable {
         }
     }
 
-    private void init() {
+    private void initWindow() {
         // Setup an error callback. The default implementation
         // will print the error message in System.err.
         GLFWErrorCallback.createPrint(System.err).set();
@@ -127,14 +129,8 @@ public class Core implements Runnable {
 
         fpsString = "";
 
-        // First Initialization
-        init();
+        initWindow();
         
-        // This line is critical for LWJGL's interoperation with GLFW's
-        // OpenGL context, or any context that is managed externally.
-        // LWJGL detects the context that is current in the current thread,
-        // creates the GLCapabilities instance and makes the OpenGL
-        // bindings available for use.
         GL.createCapabilities();
 
         glMatrixMode(GL_PROJECTION);
@@ -154,8 +150,8 @@ public class Core implements Runnable {
         game.initEngines();
 
         long initialTime = System.nanoTime();
-        final double timeU = 1000000000 / frameRate;
-        final double timeF = 1000000000 / frameRate;
+        final double timeU = SECOND / frameRate;
+        final double timeF = SECOND / frameRate;
         double deltaU = 0, deltaF = 0;
         int frames = 0, ticks = 0;
         long timer = System.currentTimeMillis();
@@ -168,18 +164,13 @@ public class Core implements Runnable {
             initialTime = currentTime;
 
             if (deltaU >= 1) {
-                // Poll for window events. The key callback above will only be
-                // invoked during this call.
-                glfwPollEvents();
                 update(deltaU);
                 ticks++;
                 deltaU--;
             }
 
             if (deltaF >= 1) {
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
                 render();
-                glfwSwapBuffers(window); // swap the color buffers
                 frames++;
                 deltaF--;
             }
@@ -194,28 +185,12 @@ public class Core implements Runnable {
                 timer += 1000;
             }
         }
-
-        init();
-        double TPS = 0;
-        long lastTime = System.nanoTime();
-        double ns = SECOND / (frameRate/2);
-        double delta = 0;
-        while (running && !glfwWindowShouldClose(window)) {
-            long now = System.nanoTime();
-            delta += (now - lastTime) / ns;
-            lastTime = now;
-            while(delta >= 1) {
-                threadLoop();
-                TPS++;
-                delta--;
-            }
-            if(System.currentTimeMillis() - timer > 1000) {
-                finalTPS = TPS;
-                timer += 1000;
-                TPS = 0;
-            }
+        
+        if (!running) {
+            glfwSetWindowShouldClose(window, true);
         }
-        stop();
+
+        dispose();
     }
 
     /**
@@ -224,19 +199,15 @@ public class Core implements Runnable {
      * @param delta
      */
     private void update(double delta) {
-        
+    	glfwPollEvents();
+    	// update code (can be multithreaded)
     }
     
     private void render() {
-        
-    }
-    
-    private void stop() {
-    	if (!running) {
-            glfwSetWindowShouldClose(window, true);
-        }
-
-        dispose();
+    	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    	// render code (can't be multithreaded)
+    	glClearColor(0f, 0f, 0f, 0f); // Background colour
+    	glfwSwapBuffers(window);
     }
 
     /**
