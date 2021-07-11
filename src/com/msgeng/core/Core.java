@@ -61,6 +61,7 @@ import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
+import com.msgeng.RepeatableMessage;
 import com.msgeng.TestMessage;
 import com.msgeng.render.ShaderProgram;
 import com.msgeng.utils.Utils;
@@ -224,6 +225,7 @@ public class Core implements Runnable {
 	        for(int i = 0; i < threadCount * 100; i++) {
 	        	mb.addMessage(new TestMessage(i));
 	        }
+	        mb.addMessage(new RepeatableMessage(20000));
 	}
 
 	@Override

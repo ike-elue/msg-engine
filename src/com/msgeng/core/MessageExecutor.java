@@ -31,6 +31,9 @@ public class MessageExecutor implements Runnable {
         if (currentMessage != null) {
             System.out.println(String.format("Running %s on thread-%s", currentMessage.getMessageTag(), id));
             System.out.println(currentMessage);
+            if(currentMessage.containsTag("Repeat")) {
+            	mb.addMessage(currentMessage);
+            }
 //            em.getEngines().forEach((e) -> {
 //                e.updateWithCurrentMessage(currentMessage, delta);
 //            });

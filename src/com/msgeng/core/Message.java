@@ -21,8 +21,12 @@ public abstract class Message {
         return messageTag;
     }
     
+    public boolean containsTag(String tag) {
+    	return messageTag.contains(String.format("[%s]", tag));
+    }
+    
     @Override
     public String toString() {
-        return String.format("Message \"%s\" carries \"%s\"", messageTag, null);
+    	return String.format("Message \"%s\" carries \"%s\"", messageTag.replaceAll("\\[.*\\]", ""), null);
     }
 }
