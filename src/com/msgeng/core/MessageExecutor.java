@@ -1,5 +1,8 @@
 package com.msgeng.core;
 
+import com.msgeng.message.Message;
+import com.msgeng.message.MessageBus;
+
 public class MessageExecutor implements Runnable {
 
     private Message currentMessage;
@@ -31,9 +34,21 @@ public class MessageExecutor implements Runnable {
         if (currentMessage != null) {
             System.out.println(String.format("Running %s on thread-%s", currentMessage.getMessageTag(), id));
             System.out.println(currentMessage);
-            if(currentMessage.containsTag("Repeat")) {
-            	mb.addMessage(currentMessage);
+            if(currentMessage.containsTag("global")) {
+            	// Will be handled by special engine in the future
+            	//mb.addMessage(new Message(currentMessage, new String[] {"request"}));
+            	
+            	mb.addGlobalRequest(currentMessage);
             }
+            
+            
+            // Temperary proof of concept
+            if(currentMessage.getId() == 365) {
+            	mb.addMessage(new Message(currentMessage));
+            	System.out.println("Using global test varibale");
+            	System.out.println(mb.getGlobal("test"));
+            }
+            
 //            em.getEngines().forEach((e) -> {
 //                e.updateWithCurrentMessage(currentMessage, delta);
 //            });

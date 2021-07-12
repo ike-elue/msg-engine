@@ -8,6 +8,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import com.msgeng.message.Message;
+import com.msgeng.message.MessageBus;
+
 public class ThreadPool {
 
     private final ExecutorService executor;
@@ -61,6 +64,18 @@ public class ThreadPool {
             mb.flipMessages();
     }
 
+    // Might be temperary
+    public void updateRequests() {
+    	//System.out.println("Current Globals:");
+        //System.out.println(mb.getGlobals());
+        
+    	Message msg = mb.tempRequest.poll();
+    	while(msg != null) {
+    		mb.overwriteGlobal(msg);
+    		msg = mb.tempRequest.poll();
+    	}
+    }
+    
     public void dispose() {
 
         try {
