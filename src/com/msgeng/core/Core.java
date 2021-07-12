@@ -62,6 +62,8 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
 import com.msgeng.TestMessage;
+import com.msgeng.message.Message;
+import com.msgeng.message.MessageBus;
 import com.msgeng.render.ShaderProgram;
 import com.msgeng.utils.Utils;
 
@@ -222,8 +224,9 @@ public class Core implements Runnable {
 	        }
 	        
 	        for(int i = 0; i < threadCount * 100; i++) {
-	        	mb.addMessage(new TestMessage(i));
+	        	mb.addMessage(new TestMessage(-1));
 	        }
+	        mb.addMessage(new TestMessage(-2, new String[] {"global"}));
 	}
 
 	@Override
@@ -271,6 +274,7 @@ public class Core implements Runnable {
 
 			if (deltaU >= 1) {
 				update(deltaU);
+				threadPool.updateRequests(); // temporary
 				ticks++;
 				deltaU--;
 			}
@@ -320,6 +324,14 @@ public class Core implements Runnable {
 
 	private void exampleRender() {
 
+		Message msg = mb.getRenderMsg();
+		while(msg != null) {
+			System.out.println("Start Rendering...");
+			System.out.println(msg);
+			System.out.println("Finish Rendering...");
+			msg = mb.getRenderMsg();
+		}
+		
 	    shaderProgram.bind();
 
 	    // Bind to the VAO
