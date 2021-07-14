@@ -8,8 +8,8 @@ public class TestMessage extends Message {
 		super(senderID, "This is test", null);
 	}
 	
-	public TestMessage(int senderID, String[] specialTags) {
-		super(senderID, translateTags(specialTags) + "This is test", null);
+	public TestMessage(int senderID, String[] specialTags, String alias) {
+		super(senderID, translateTags(specialTags) + "This is special tag test", null, alias);
 	}
 
 }

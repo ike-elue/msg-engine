@@ -7,6 +7,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.msgeng.message.Message;
 import com.msgeng.message.MessageBus;
@@ -39,16 +41,10 @@ public class ThreadPool {
                 try {
                     f.get();
                 } catch (InterruptedException | ExecutionException ex) {
-                    //Logger.getLogger(ThreadPool.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(ThreadPool.class.getName()).log(Level.SEVERE, null, ex);
                 }
             });
         }
-
-//        try {
-//            wait();
-//        } catch (InterruptedException ex) {
-//            Logger.getLogger(ThreadPool.class.getName()).log(Level.SEVERE, null, ex);
-//        }
         
         futures.clear();
     }
@@ -65,15 +61,11 @@ public class ThreadPool {
             mb.flipMessages();
     }
 
-    // Might be temperary
     public void updateRequests() {
-    	//System.out.println("Current Globals:");
-        //System.out.println(mb.getGlobals());
-        
-    	Message msg = mb.tempRequest.poll();
+    	Message msg = mb.getRequestedGlobal();
     	while(msg != null) {
     		mb.overwriteGlobal(msg);
-    		msg = mb.tempRequest.poll();
+    		msg = mb.getRequestedGlobal();
     	}
     }
     

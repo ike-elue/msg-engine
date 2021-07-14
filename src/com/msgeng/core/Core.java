@@ -62,10 +62,12 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
 import com.msgeng.TestMessage;
+import com.msgeng.engine.EngineManager;
 import com.msgeng.message.Message;
 import com.msgeng.message.MessageBus;
 import com.msgeng.render.ShaderProgram;
-import com.msgeng.utils.Utils;
+import com.msgeng.utils.Loader;
+import com.msgeng.utils.RawModel;
 
 /**
  *
@@ -73,8 +75,11 @@ import com.msgeng.utils.Utils;
  */
 public class Core implements Runnable {
 
-	public final double SECOND = 1000000000;
-
+	public static final double SECOND = 1000000000;
+	public static final double MILLISECOND = 1000000;
+	
+	public static long INIT_TIME = 0;
+	
 	private MessageBus mb;
 	
 	// Thread Main
@@ -92,10 +97,12 @@ public class Core implements Runnable {
 
 	// Classes
 	private final AbstractGame game;
-
+	private final EngineManager em;
+	
 	// ShaderProgram
 	private ShaderProgram shaderProgram;
-
+	private RawModel exampleModel; // Can be used once i understand indices
+	
     private int vboId;
 
     private int vaoId;
@@ -119,7 +126,8 @@ public class Core implements Runnable {
 		this.game = game;
 		this.isDebug = isDebug;
 		
-		mb = new MessageBus(threadCount);
+		em = new EngineManager();
+		mb = new MessageBus(threadCount, em);
 		threadPool = new ThreadPool(mb);
 	}
 
@@ -183,9 +191,12 @@ public class Core implements Runnable {
 	 * @throws Exception 
 	 */
 	private void initEngines() throws Exception {
-		shaderProgram = new ShaderProgram();
-		shaderProgram.createVertexShader(Utils.loadResource("/vertex.vs"));
-		shaderProgram.createFragmentShader(Utils.loadResource("/fragment.fs"));
+		
+		em.init();
+		
+		shaderProgram = new ShaderProgram("default");
+		shaderProgram.createVertexShader(Loader.loadShaderResource("/vertex.vs"));
+		shaderProgram.createFragmentShader(Loader.loadShaderResource("/fragment.fs"));
 		shaderProgram.link();
 		
 		 float[] vertices = new float[]{
@@ -223,16 +234,17 @@ public class Core implements Runnable {
 	            }
 	        }
 	        
-	        for(int i = 0; i < threadCount * 100; i++) {
+	        for(int i = 0; i < threadCount; i++) {
 	        	mb.addMessage(new TestMessage(-1));
 	        }
-	        mb.addMessage(new TestMessage(-2, new String[] {"global"}));
+	        mb.addMessage(new TestMessage(-2, new String[] {"global"}, "tester"));
 	}
 
 	@Override
 	public void run() {
 		System.out.println("This program is using LWJGL " + Version.getVersion() + ", and it's working?");
-
+		INIT_TIME =  System.nanoTime() / (long) MILLISECOND;
+		
 		fpsString = "";
 
 		initWindow();
@@ -274,7 +286,6 @@ public class Core implements Runnable {
 
 			if (deltaU >= 1) {
 				update(deltaU);
-				threadPool.updateRequests(); // temporary
 				ticks++;
 				deltaU--;
 			}
@@ -310,15 +321,14 @@ public class Core implements Runnable {
 	 */
 	private void update(double delta) {
 		glfwPollEvents();
-		// update code (can be multithreaded)
 		threadPool.update(delta);
+		threadPool.updateRequests();
 	}
 
 	private void render() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		// render code (can't be multithreaded)
 		exampleRender();
-		glClearColor(0f, 0f, 0f, 0f); // Background colour
+		glClearColor(0f, 0f, 0f, 0f);
 		glfwSwapBuffers(window);
 	}
 
@@ -367,6 +377,8 @@ public class Core implements Runnable {
 	    glBindVertexArray(0);
 	    glDeleteVertexArrays(vaoId);
 	    
+	    Loader.cleanUp();
+	    
 	    threadPool.dispose();
 		
 		// Free the window callbacks and destroy the window
@@ -391,5 +403,13 @@ public class Core implements Runnable {
 
 	public final long getWindow() {
 		return window;
+	}
+	
+	public final MessageBus getMessageBus() {
+		return mb;
+	}
+	
+	public final EngineManager getEngineManager() {
+		return em;
 	}
 }

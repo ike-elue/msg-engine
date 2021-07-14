@@ -1,15 +1,19 @@
 package com.msgeng.message;
 
+import com.msgeng.engine.EngineManager;
+
 public class MessageExecutor implements Runnable {
 
     private Message currentMessage;
     private double delta;
     private final MessageBus mb;
+    private final EngineManager em;
     private final int id;
     
-    public MessageExecutor(MessageBus mb, int id) {
+    public MessageExecutor(MessageBus mb, EngineManager em, int id) {
         this.mb = mb;
         delta = 0;
+        this.em = em;
         this.id = id;
     }
 
@@ -29,30 +33,16 @@ public class MessageExecutor implements Runnable {
     public void run() {
         currentMessage = mb.receiveMessage();
         if (currentMessage != null) {
-            System.out.println(String.format("Running %s on thread-%s", currentMessage.getMessageTag(), id));
+            System.out.println(String.format("Running \"%s\" on thread-%s", currentMessage.getMessageTag(), id));
             System.out.println(currentMessage);
             if(currentMessage.containsTag("global")) {
-            	// Will be handled by special engine in the future
-            	//mb.addMessage(new Message(currentMessage, new String[] {"request"}));
-            	
-            	mb.addGlobalRequest(currentMessage);
+            	// Will be special engine later
+            	mb.addMessage(currentMessage);
             }
             
-            
-            // Temperary proof of concept
-            if(currentMessage.getId() == 365) {
-            	mb.addMessage(new Message(currentMessage));
-            	System.out.println("Using global test varibale");
-            	System.out.println(mb.getGlobal("test"));
-            }
-            
-//            em.getEngines().forEach((e) -> {
-//                e.updateWithCurrentMessage(currentMessage, delta);
-//            });
-//            if (!currentMessage.shouldDeactivate()) {
-//                currentMessage.onRepeat();
-//                mb.addMessage(currentMessage);
-//            }
+            em.getEngines().forEach((e) -> {
+                e.updateWithCurrentMessage(currentMessage, delta);
+            });
         }
 
         currentMessage = null;
