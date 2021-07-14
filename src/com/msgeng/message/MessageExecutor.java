@@ -1,7 +1,4 @@
-package com.msgeng.core;
-
-import com.msgeng.message.Message;
-import com.msgeng.message.MessageBus;
+package com.msgeng.message;
 
 public class MessageExecutor implements Runnable {
 

@@ -4,8 +4,6 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import com.msgeng.core.MessageExecutor;
-
 public class MessageBus {
     private final MessageExecutor[] executors;
     
