@@ -1,5 +1,7 @@
 package com.msgeng.core;
 
+import com.msgeng.engine.Engine;
+
 public abstract class AbstractGame {
 	private final Core c;
 
@@ -17,7 +19,7 @@ public abstract class AbstractGame {
 	}
 
 	/**
-	 * Initialize special features in game if any (None Yet)
+	 * Initialize special features in game if any
 	 */
 	public abstract void init();
 
@@ -33,9 +35,9 @@ public abstract class AbstractGame {
 		c.start();
 	}
 
-	public void addEngine() {
-		
-	}
+	public void addEngine(Engine engine) {
+        c.getEngineManager().addEngine(engine);
+    }
 
 	/**
 	 * @return returns Core
